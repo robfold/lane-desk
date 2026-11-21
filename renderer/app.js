@@ -120,7 +120,7 @@ function accountRow(a, provider) {
         a.best ? h('span', { class: 'tag best' }, T('ui.best')) : null,
         a.live ? h('span', { class: 'tag live', title: T('ui.live') }, `● ${a.live}`) : null,
         a.stale || a.failed ? h('span', { class: 'tag warn' }, a.failed ? T('ui.failed') : T('ui.stale')) : null,
-        a.limitReset ? h('span', { class: `tag reset ${a.limitReset.state}`, title: a.limitReset.title }, a.limitReset.label) : null,
+        a.limitReset && a.limitReset.label ? h('span', { class: `tag reset ${a.limitReset.state}`, title: a.limitReset.title }, a.limitReset.label) : null,
         a.runout && a.runout.label ? h('span', { class: `tag runout ${a.runout.state}`, title: a.runout.title }, a.runout.label) : null,
       ),
     ),

@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import lr from '../lib/limitreset.js';
 import model from '../lib/model.js';
+import { createRequire } from 'node:module';
+
+// The same instance the app code gets from require('./i18n'), so setLang reaches it.
+const i18n = createRequire(import.meta.url)('../lib/i18n.js');
 
 const { parseStamp, signalInText, signalInLine, fold, effective, wallOf, projectSlug } = lr;
 const { buildView, resetInfo } = model;
@@ -141,7 +145,7 @@ describe('view: reset tags and buttons', () => {
   const row = (pid) => v.sessions.find((s) => s.pid === pid);
 
   it('tags only Claude accounts; a rollout value of off adds a hint but does not block', () => {
-    expect(acc('c1').limitReset.label).toBe('Reset ?');
+    expect(acc('c1').limitReset).toMatchObject({ state: 'unknown', label: null });
     expect(acc('c3').limitReset.state).toBe('unknown');
     expect(acc('c3').limitReset.title).toMatch(/cached rollout value for this login is off/);
     expect(acc('x1').limitReset).toBeNull();
@@ -164,5 +168,74 @@ describe('view: reset tags and buttons', () => {
   it('blocks the button for an account that used this week\'s reset and shows the time left', () => {
     const info = resetInfo(true, { state: 'used', nextAt: NOW + 2 * 3600000, at: NOW }, NOW);
     expect(info.label).toBe('Reset used · 2h 0m');
+  });
+});
+
+describe('view: reset tags from Tally resetState', () => {
+  const used2h = { state: 'used', nextAt: NOW + 2 * 3600000, at: NOW };
+
+  it('uses Tally notSupported as No reset when Lane Desk saw nothing', () => {
+    const info = resetInfo(null, null, NOW, 'notSupported');
+    expect(info).toMatchObject({ state: 'off', label: 'No reset' });
+    expect(info.title).toMatch(/Source: Tally/);
+  });
+
+  it('uses Tally used as Reset used without a time, since Tally gives no date', () => {
+    expect(resetInfo(null, null, NOW, 'used')).toMatchObject({ state: 'used', label: 'Reset used' });
+  });
+
+  it('uses Tally available as Reset left', () => {
+    expect(resetInfo(null, null, NOW, 'available')).toMatchObject({ state: 'available', label: 'Reset left' });
+  });
+
+  it('lets what Lane Desk saw in the transcripts win over Tally', () => {
+    const info = resetInfo(null, used2h, NOW, 'available');
+    expect(info).toMatchObject({ state: 'used', label: 'Reset used · 2h 0m' });
+    expect(info.title).toMatch(/Lane Desk saw this/);
+    expect(resetInfo(null, { state: 'notEnabled', nextAt: null, at: NOW }, NOW, 'available').state).toBe('off');
+    expect(resetInfo(null, { state: 'available', nextAt: null, at: NOW }, NOW, 'notSupported').state).toBe('available');
+  });
+
+  it('falls back to Tally when the transcripts only said "not right now"', () => {
+    expect(resetInfo(null, { state: 'unknown', nextAt: null, at: NOW }, NOW, 'notSupported').state).toBe('off');
+  });
+
+  it('draws no tag when neither Lane Desk nor Tally knows', () => {
+    for (const tally of ['unknown', null, undefined, 'somethingNew', '__proto__']) {
+      expect(resetInfo(null, null, NOW, tally)).toMatchObject({ state: 'unknown', label: null });
+    }
+  });
+
+  it('reads resetState from tally status, and keeps the button rules', () => {
+    const status = {
+      accounts: [
+        { id: 'c1', provider: 'claude', label: 'a', launchHome: '/h/.claude-a', weeklyRemaining: 90, resetState: 'notSupported' },
+        { id: 'c2', provider: 'claude', label: 'b', launchHome: '/h/.claude-b', weeklyRemaining: 90, resetState: 'used' },
+        { id: 'c3', provider: 'claude', label: 'c', launchHome: '/h/.claude-c', weeklyRemaining: 90, resetState: 'unknown' },
+        { id: 'x1', provider: 'codex', label: 'x', launchHome: '/h/.codex', weeklyRemaining: 90, resetState: 'available' },
+      ],
+    };
+    const at = (pid, home) => ({ pid, home, name: `s${pid}`, cwd: '/h', status: 'idle', tmux: `${pid}:@${pid}.%${pid}`, updatedAt: NOW - pid, wall: 'session' });
+    const v = buildView({ status, now: NOW, sessions: [at(1, '/h/.claude-a'), at(2, '/h/.claude-b'), at(3, '/h/.claude-c')] });
+    const acc = (id) => v.providers.flatMap((p) => p.accounts).find((a) => a.id === id);
+    const row = (pid) => v.sessions.find((s) => s.pid === pid);
+    expect(acc('c1').limitReset).toMatchObject({ state: 'off', label: 'No reset' });
+    expect(acc('c2').limitReset).toMatchObject({ state: 'used', label: 'Reset used' });
+    expect(acc('c3').limitReset).toMatchObject({ state: 'unknown', label: null });
+    expect(acc('x1').limitReset).toBeNull();
+    expect(row(1).reset).toBeNull();
+    expect(row(2).reset).toMatchObject({ can: false });
+    expect(row(3).reset).toEqual({ can: true, why: null });
+  });
+
+  it('says it in Korean too', () => {
+    i18n.setLang('ko');
+    try {
+      const info = resetInfo(null, null, NOW, 'notSupported');
+      expect(info.label).toBe('리셋 없음');
+      expect(info.title).toMatch(/근거: Tally/);
+    } finally {
+      i18n.setLang('en');
+    }
   });
 });

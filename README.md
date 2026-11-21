@@ -84,10 +84,10 @@ The forecast assumes you keep using each account the way you did. If Tally start
 Claude Code can lift a session's 5-hour limit once a week with `/limit-reset`. The weekly limit stays. There is no API for it, so the state comes from two places:
 
 1. **What Lane Desk sees.** It reads only what Claude Code itself writes to the transcript: the command's output and limit notices. It does not read the conversation, which can quote those sentences.
-2. **Tally's `resetState`.** `tally status --json` gives each account `available`, `used`, `notSupported`, or `unknown`. Lane Desk uses it only when it has seen nothing itself.
+2. **Tally's `resetState`.** `tally status --json` gives each account `available`, `used`, `notSupported`, or `unknown`. Lane Desk uses only `used` and `available`, and only when it has seen nothing itself. It ignores `notSupported`: for Claude, Tally reports it when nothing was observed and the cached rollout flags are off, and those flags flip on and off within an hour.
 
-- Accounts get a tag: `Reset left`, `Reset used · 2d 4h` (just `Reset used` when the next date is not known, as with Tally), or `No reset` (this login has no `/limit-reset`: Claude Code answered "Unknown command", or Tally says `notSupported`). Hover the tag to see which source it came from.
-- When neither knows, the account gets no tag, the same as in Tally.
+- Accounts get a tag: `Reset left`, `Reset used · 2d 4h` (just `Reset used` when the next date is not known, as with Tally), or `No reset` (Claude Code answered "Unknown command" in this login's transcripts). Hover the tag to see which source it came from.
+- When neither knows, the account gets no tag. Tally draws nothing for `unknown` either.
 - The button works only when the session is idle, this week's reset is not known to be used (an account with no tag counts), and the account has at least 20% weekly left (Tally's rule: below that, the weekly wall comes soon anyway).
 - It does not type into a tmux pane in scroll mode, and it checks the session again right before typing.
 - Not seen yet: the success sentence. The only real answer observed so far is "A 5-hour limit reset isn't available right now." from a session that was not at its limit.

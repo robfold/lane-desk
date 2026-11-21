@@ -84,10 +84,10 @@ Tally는 계정 사용량이 바뀔 때마다 `~/.tally/history.jsonl`에 한 �
 Claude Code는 `/limit-reset`으로 세션의 5시간 한도를 주 1회 풀어 줍니다. 주간 한도는 그대로입니다. API가 없어서 상태는 두 곳에서 정합니다.
 
 1. **Lane Desk가 직접 본 것.** Claude Code가 대화 기록에 직접 쓴 것만 읽습니다. 명령 출력과 한도 안내입니다. 대화 본문은 그 문장을 인용할 수 있어 읽지 않습니다.
-2. **Tally의 `resetState`.** `tally status --json`은 계정마다 `available`, `used`, `notSupported`, `unknown` 중 하나를 줍니다. Lane Desk는 직접 본 것이 없을 때만 이 값을 씁니다.
+2. **Tally의 `resetState`.** `tally status --json`은 계정마다 `available`, `used`, `notSupported`, `unknown` 중 하나를 줍니다. Lane Desk는 직접 본 것이 없을 때만 `used`와 `available`을 씁니다. `notSupported`는 쓰지 않습니다. Claude에서는 관찰이 없고 캐시된 롤아웃 플래그가 꺼져 있을 때 나오는 값인데, 이 플래그는 한 시간 안에도 켜짐과 꺼짐을 오갑니다.
 
-- 계정에 `리셋 남음`, `리셋 씀 · 2d 4h 뒤`(Tally 값처럼 다음 날짜를 모르면 `리셋 씀`), `리셋 없음`(이 로그인에 `/limit-reset`이 없음. Claude Code가 Unknown command로 답했거나 Tally가 `notSupported`라고 함) 중 하나를 붙입니다. 태그에 마우스를 올리면 어느 쪽 근거인지 보입니다.
-- 둘 다 모르면 태그를 붙이지 않습니다. Tally 화면과 같습니다.
+- 계정에 `리셋 남음`, `리셋 씀 · 2d 4h 뒤`(Tally 값처럼 다음 날짜를 모르면 `리셋 씀`), `리셋 없음`(이 로그인의 대화 기록에서 Claude Code가 Unknown command로 답함) 중 하나를 붙입니다. 태그에 마우스를 올리면 어느 쪽 근거인지 보입니다.
+- 둘 다 모르면 태그를 붙이지 않습니다. Tally도 `unknown`이면 아무것도 그리지 않습니다.
 - 버튼은 세 조건을 모두 만족할 때만 눌립니다. 세션이 대기 상태, 이번 주 리셋을 썼다고 확인되지 않음(태그가 없는 계정도 포함), 주간 잔량 20% 이상입니다. 20%는 Tally와 같은 기준입니다. 그 아래면 곧 주간 한도에 걸립니다.
 - tmux 창이 스크롤 모드면 입력하지 않습니다. 입력 직전에 세션 상태를 한 번 더 봅니다.
 - 아직 관찰하지 못한 것: 성공 문장. 지금까지 본 실제 답은 한도에 걸리지 않은 세션에서 나온 "A 5-hour limit reset isn't available right now." 하나입니다.

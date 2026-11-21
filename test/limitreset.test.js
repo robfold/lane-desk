@@ -174,10 +174,20 @@ describe('view: reset tags and buttons', () => {
 describe('view: reset tags from Tally resetState', () => {
   const used2h = { state: 'used', nextAt: NOW + 2 * 3600000, at: NOW };
 
-  it('uses Tally notSupported as No reset when Lane Desk saw nothing', () => {
-    const info = resetInfo(null, null, NOW, 'notSupported');
+  it('ignores Tally notSupported: for Claude it comes from flapping rollout flags, not an Unknown command answer', () => {
+    expect(resetInfo(null, null, NOW, 'notSupported')).toMatchObject({ state: 'unknown', label: null });
+    expect(resetInfo(false, null, NOW, 'notSupported').title).toMatch(/cached rollout value for this login is off/);
+  });
+
+  it('still shows No reset when the transcripts hold a real Unknown command answer', () => {
+    const info = resetInfo(null, { state: 'notEnabled', nextAt: null, at: NOW }, NOW, 'unknown');
     expect(info).toMatchObject({ state: 'off', label: 'No reset' });
-    expect(info.title).toMatch(/Source: Tally/);
+    expect(info.title).toMatch(/Lane Desk saw this/);
+  });
+
+  it('uses Tally used and available with Tally as the source', () => {
+    expect(resetInfo(null, null, NOW, 'used').title).toMatch(/Source: Tally/);
+    expect(resetInfo(null, null, NOW, 'available').title).toMatch(/Source: Tally/);
   });
 
   it('uses Tally used as Reset used without a time, since Tally gives no date', () => {
@@ -197,16 +207,17 @@ describe('view: reset tags from Tally resetState', () => {
   });
 
   it('falls back to Tally when the transcripts only said "not right now"', () => {
-    expect(resetInfo(null, { state: 'unknown', nextAt: null, at: NOW }, NOW, 'notSupported').state).toBe('off');
+    expect(resetInfo(null, { state: 'unknown', nextAt: null, at: NOW }, NOW, 'used').state).toBe('used');
+    expect(resetInfo(null, { state: 'unknown', nextAt: null, at: NOW }, NOW, 'notSupported')).toMatchObject({ state: 'unknown', label: null });
   });
 
   it('draws no tag when neither Lane Desk nor Tally knows', () => {
-    for (const tally of ['unknown', null, undefined, 'somethingNew', '__proto__']) {
+    for (const tally of ['unknown', 'notSupported', null, undefined, 'somethingNew', '__proto__']) {
       expect(resetInfo(null, null, NOW, tally)).toMatchObject({ state: 'unknown', label: null });
     }
   });
 
-  it('reads resetState from tally status, and keeps the button rules', () => {
+  it('reads resetState from tally status; notSupported keeps the Reset button', () => {
     const status = {
       accounts: [
         { id: 'c1', provider: 'claude', label: 'a', launchHome: '/h/.claude-a', weeklyRemaining: 90, resetState: 'notSupported' },
@@ -219,11 +230,11 @@ describe('view: reset tags from Tally resetState', () => {
     const v = buildView({ status, now: NOW, sessions: [at(1, '/h/.claude-a'), at(2, '/h/.claude-b'), at(3, '/h/.claude-c')] });
     const acc = (id) => v.providers.flatMap((p) => p.accounts).find((a) => a.id === id);
     const row = (pid) => v.sessions.find((s) => s.pid === pid);
-    expect(acc('c1').limitReset).toMatchObject({ state: 'off', label: 'No reset' });
+    expect(acc('c1').limitReset).toMatchObject({ state: 'unknown', label: null });
     expect(acc('c2').limitReset).toMatchObject({ state: 'used', label: 'Reset used' });
     expect(acc('c3').limitReset).toMatchObject({ state: 'unknown', label: null });
     expect(acc('x1').limitReset).toBeNull();
-    expect(row(1).reset).toBeNull();
+    expect(row(1).reset).toEqual({ can: true, why: null });
     expect(row(2).reset).toMatchObject({ can: false });
     expect(row(3).reset).toEqual({ can: true, why: null });
   });
@@ -231,8 +242,8 @@ describe('view: reset tags from Tally resetState', () => {
   it('says it in Korean too', () => {
     i18n.setLang('ko');
     try {
-      const info = resetInfo(null, null, NOW, 'notSupported');
-      expect(info.label).toBe('리셋 없음');
+      const info = resetInfo(null, null, NOW, 'used');
+      expect(info.label).toBe('리셋 씀');
       expect(info.title).toMatch(/근거: Tally/);
     } finally {
       i18n.setLang('en');

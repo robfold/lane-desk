@@ -81,16 +81,20 @@ The forecast assumes you keep using each account the way you did. If Tally start
 
 ## About Reset (`/limit-reset`)
 
-Claude Code can lift a session's 5-hour limit once a week with `/limit-reset`. The weekly limit stays. There is no API for it, so Lane Desk only reads what Claude Code itself writes to the transcript: the command's output and limit notices. It does not read the conversation, which can quote those sentences.
+Claude Code can lift a session's 5-hour limit once a week with `/limit-reset`. The weekly limit stays. There is no API for it, so the state comes from two places:
 
-- Accounts get a tag: `Reset ?` (not seen yet), `Reset left`, `Reset used · 2d 4h`, or `No reset` (Claude Code answered "Unknown command").
-- The button works only when the session is idle, this week's reset is not known to be used (`Reset ?` counts), and the account has at least 20% weekly left (Tally's rule: below that, the weekly wall comes soon anyway).
+1. **What Lane Desk sees.** It reads only what Claude Code itself writes to the transcript: the command's output and limit notices. It does not read the conversation, which can quote those sentences.
+2. **Tally's `resetState`.** `tally status --json` gives each account `available`, `used`, `notSupported`, or `unknown`. Lane Desk uses it only when it has seen nothing itself.
+
+- Accounts get a tag: `Reset left`, `Reset used · 2d 4h` (just `Reset used` when the next date is not known, as with Tally), or `No reset` (this login has no `/limit-reset`: Claude Code answered "Unknown command", or Tally says `notSupported`). Hover the tag to see which source it came from.
+- When neither knows, the account gets no tag, the same as in Tally.
+- The button works only when the session is idle, this week's reset is not known to be used (an account with no tag counts), and the account has at least 20% weekly left (Tally's rule: below that, the weekly wall comes soon anyway).
 - It does not type into a tmux pane in scroll mode, and it checks the session again right before typing.
 - Not seen yet: the success sentence. The only real answer observed so far is "A 5-hour limit reset isn't available right now." from a session that was not at its limit.
 
 ## What it reads
 
-- `tally status --json` and `~/.tally/history.jsonl`
+- `tally status --json` (accounts, usage, Tally's pick, and each account's `resetState`) and `~/.tally/history.jsonl`
 - `~/.config/lane-desk/config.json`, if present
 - For each Claude account folder Tally knows: `sessions/<pid>.json` (pid, name, folder, status, tmux pane; nothing else is kept), the last 8 days of transcripts (`projects/*/*.jsonl`) for `/limit-reset` answers and limit notices, and one cached rollout value in `.claude.json`
 

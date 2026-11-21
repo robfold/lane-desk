@@ -123,6 +123,8 @@ It does not read Keychain, tokens, session `.key` files, or process arguments, a
 npm test
 ```
 
+Releases go out from GitHub Actions: push a tag that matches `package.json` (`git tag v0.1.1 && git push origin v0.1.1`) and [`publish.yml`](.github/workflows/publish.yml) tests and publishes with npm trusted publishing. No npm token is stored.
+
 The tests cover the pure parts: lanes, the view, the forecast, and reading `/limit-reset` answers. Anything that touches tmux, iTerm, or the screen was checked by hand.
 
 ## Credits

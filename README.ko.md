@@ -123,6 +123,8 @@ Keychain, 토큰, 세션 `.key` 파일, 프로세스 인자는 읽지 않고, �
 npm test
 ```
 
+배포는 GitHub Actions가 합니다. `package.json` 버전과 같은 태그를 push하면(`git tag v0.1.1 && git push origin v0.1.1`) [`publish.yml`](.github/workflows/publish.yml)이 테스트한 뒤 npm 신뢰 배포(OIDC)로 올립니다. npm 토큰은 어디에도 저장하지 않습니다.
+
 테스트는 순수 함수 부분(실행 명령, 화면 값, 바닥 예상, `/limit-reset` 답 읽기)을 다룹니다. tmux·iTerm·화면에 닿는 부분은 손으로 확인했습니다.
 
 ## 출처

@@ -1,0 +1,28 @@
+# Publish to npm when a version tag (v1.2.3) is pushed. npm trusted publishing (OIDC): no token is stored.
+name: Publish to npm
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    # package.json limits the package to macOS ("os": ["darwin"]), so install and test there.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Use an npm that supports trusted publishing (11.5.1+)
+        run: npm install -g npm@latest
+      - name: Tag must match package.json version
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: npm ci
+      - run: npm test
+      - run: npm publish --access public

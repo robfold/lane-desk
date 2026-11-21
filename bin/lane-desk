@@ -1,0 +1,10 @@
+#!/bin/sh
+# Start Lane Desk in the menu bar. Pass --window to open a window right away.
+here=$(dirname "$(realpath "$0")")
+root="$here/.."
+electron="$root/node_modules/.bin/electron"
+if [ ! -x "$electron" ]; then
+  echo "Dependencies are missing. Run first: (cd \"$root\" && npm install)" >&2
+  exit 1
+fi
+nohup "$electron" "$root" "$@" >/dev/null 2>&1 &

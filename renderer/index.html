@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'"
+    />
+    <title>Lane Desk</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand">Lane <b>Desk</b></div>
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="usage" data-t="ui.tabUsage">Usage</button>
+        <button role="tab" data-tab="sessions" data-t="ui.tabSessions">Sessions <span class="count" id="session-count"></span></button>
+      </nav>
+      <div class="tools">
+        <span class="muted" id="updated"></span>
+        <button class="icon" id="refresh" data-t-title="ui.refresh" title="Refresh (⌘R)">↻</button>
+        <button class="icon only-popover" id="open-window" data-t-title="ui.openWindow" title="Open as window">⧉</button>
+        <button class="icon only-window" id="new-tab" data-t-title="ui.newTab" title="New tab (⌘T)">＋</button>
+      </div>
+    </header>
+    <main id="content"></main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

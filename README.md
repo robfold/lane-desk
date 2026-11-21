@@ -20,22 +20,30 @@ A macOS menu bar app for people who use Claude Code or Codex on more than one ac
 
 - macOS
 - [Tally](https://github.com/jettoai/tally) running, with your accounts added. Usage numbers come only from `tally status --json` and `~/.tally/history.jsonl`; see [What it reads](#what-it-reads) for the rest.
-- Node.js 22.12 or later, to install
+- Node.js 22.12 or later
 - For New session, Attach, and Reset: [tmux](https://github.com/tmux/tmux) 3.2 or later and [iTerm2](https://iterm2.com)
 
 ## Install
 
 ```
+npx lane-desk            # menu bar only
+npx lane-desk --window   # also open a window
+```
+
+Or install it once with `npm i -g lane-desk` and run `lane-desk`. The first run downloads Electron (about 110 MB). Installed from npm, it runs without the "unidentified developer" prompt that an unsigned `.app` download gets.
+
+From a clone:
+
+```
 git clone https://github.com/robfold/lane-desk.git
 cd lane-desk
 npm install
-bin/lane-desk            # menu bar only
-bin/lane-desk --window   # also open a window
+bin/lane-desk --window
 ```
 
 Click the menu bar title for the popover. Right-click it for "Open as Window". In a window, `⌘N` opens a new window and `⌘T` a new tab.
 
-Want to look before you connect anything? `npm run demo` opens the window with made-up accounts.
+Want to look before you connect anything? `LANE_DESK_DEMO=1 npx lane-desk --window` opens the window with made-up accounts.
 
 ## Starting sessions
 
@@ -102,7 +110,7 @@ It does not read Keychain, tokens, session `.key` files, or process arguments, a
 ## Not in this version
 
 - Codex sessions in the Sessions tab. Codex writes no per-process session file to find them by.
-- A signed `.app`. Run it from the clone with `bin/lane-desk`.
+- A signed `.app`. Run it with `npx lane-desk` or from a clone.
 
 ## When to use something else
 

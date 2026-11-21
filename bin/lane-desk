@@ -1,10 +1,27 @@
-#!/bin/sh
-# Start Lane Desk in the menu bar. Pass --window to open a window right away.
-here=$(dirname "$(realpath "$0")")
-root="$here/.."
-electron="$root/node_modules/.bin/electron"
-if [ ! -x "$electron" ]; then
-  echo "Dependencies are missing. Run first: (cd \"$root\" && npm install)" >&2
-  exit 1
-fi
-nohup "$electron" "$root" "$@" >/dev/null 2>&1 &
+#!/usr/bin/env node
+'use strict';
+// Start Lane Desk in the menu bar and return to the shell. Pass --window to open a window right away.
+// Works from a clone (bin/lane-desk) and from npm (npx lane-desk, npm i -g lane-desk).
+
+const path = require('node:path');
+const { spawn } = require('node:child_process');
+
+let electron;
+try {
+  // The electron package gives the path to its binary, downloading it on first use.
+  electron = require('electron');
+} catch (e) {
+  console.error(`Could not load Electron: ${e.message}`);
+  console.error('From a clone, run `npm install` first.');
+  process.exit(1);
+}
+
+const root = path.join(__dirname, '..');
+const capture = Boolean(process.env.LANE_DESK_CAPTURE);
+const child = spawn(electron, [root, ...process.argv.slice(2)], {
+  // A capture run renders PNGs and quits, so wait for it. A normal run stays in the menu bar on its own.
+  detached: !capture,
+  stdio: 'ignore',
+});
+if (capture) child.on('exit', (code) => process.exit(code ?? 0));
+else child.unref();

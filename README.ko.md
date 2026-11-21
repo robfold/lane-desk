@@ -20,22 +20,30 @@ Claude Code나 Codex를 계정 여러 개로 쓰는 사람을 위한 macOS 메�
 
 - macOS
 - 계정을 추가해 둔 [Tally](https://github.com/jettoai/tally). 사용량 숫자는 `tally status --json`과 `~/.tally/history.jsonl`에서만 옵니다. 그 밖에 읽는 것은 [읽는 것](#읽는-것)에 있습니다.
-- 설치용 Node.js 22.12 이상
+- Node.js 22.12 이상
 - 새 세션·붙기·리셋을 쓰려면 [tmux](https://github.com/tmux/tmux) 3.2 이상과 [iTerm2](https://iterm2.com)
 
 ## 설치
 
 ```
+npx lane-desk            # 메뉴바만
+npx lane-desk --window   # 창도 바로 열기
+```
+
+`npm i -g lane-desk`로 한 번 설치한 뒤 `lane-desk`로 실행해도 됩니다. 처음 실행할 때 Electron(약 110MB)을 받습니다. npm으로 받으면 서명 없는 `.app`을 내려받을 때 뜨는 「확인되지 않은 개발자」 차단 없이 실행됩니다.
+
+clone해서 쓸 때:
+
+```
 git clone https://github.com/robfold/lane-desk.git
 cd lane-desk
 npm install
-bin/lane-desk            # 메뉴바만
-bin/lane-desk --window   # 창도 바로 열기
+bin/lane-desk --window
 ```
 
 메뉴바 글자를 누르면 팝오버가 열립니다. 오른쪽 클릭 메뉴에 「창으로 열기」가 있습니다. 창에서 `⌘N`은 새 창, `⌘T`는 새 탭입니다.
 
-연결하기 전에 먼저 보고 싶다면 `npm run demo`로 지어낸 계정 화면을 엽니다.
+연결하기 전에 먼저 보고 싶다면 `LANE_DESK_DEMO=1 npx lane-desk --window`로 지어낸 계정 화면을 엽니다.
 
 ## 세션을 여는 명령
 
@@ -102,7 +110,7 @@ Keychain, 토큰, 세션 `.key` 파일, 프로세스 인자는 읽지 않고, �
 ## 이번 판에 없는 것
 
 - 세션 탭의 Codex 세션. Codex는 프로세스별 세션 파일을 남기지 않아 찾을 근거가 없습니다.
-- 서명된 `.app`. clone한 폴더에서 `bin/lane-desk`로 실행합니다.
+- 서명된 `.app`. `npx lane-desk`나 clone한 폴더에서 실행합니다.
 
 ## 다른 도구가 나은 경우
 

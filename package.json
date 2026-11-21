@@ -1,25 +1,54 @@
 {
   "name": "lane-desk",
-  "private": true,
   "version": "0.1.0",
   "description": "See your Claude Code and Codex accounts from Tally in the macOS menu bar, see when each runs out, and start or attach sessions.",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "tally",
+    "menu-bar",
+    "macos",
+    "electron",
+    "tmux"
+  ],
   "license": "MIT",
+  "author": "Rob",
+  "homepage": "https://github.com/robfold/lane-desk#readme",
+  "bugs": {
+    "url": "https://github.com/robfold/lane-desk/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/robfold/lane-desk.git"
   },
-  "main": "main.js",
   "engines": {
     "node": ">=22.12.0"
   },
+  "os": [
+    "darwin"
+  ],
+  "main": "main.js",
+  "bin": {
+    "lane-desk": "bin/lane-desk"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "renderer/",
+    "main.js",
+    "preload.js",
+    "NOTICE"
+  ],
   "scripts": {
-    "start": "electron .",
+    "start": "node bin/lane-desk",
     "window": "electron . --window",
     "test": "vitest run",
     "demo": "LANE_DESK_DEMO=1 electron . --window"
   },
+  "dependencies": {
+    "electron": "45.4.1"
+  },
   "devDependencies": {
-    "electron": "45.4.1",
     "vitest": "^5.1.1"
   },
   "allowScripts": {

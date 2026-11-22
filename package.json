@@ -1,6 +1,6 @@
 {
   "name": "lane-desk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "See your Claude Code and Codex accounts from Tally in the macOS menu bar, see when each runs out, and start or attach sessions.",
   "keywords": [
     "claude-code",

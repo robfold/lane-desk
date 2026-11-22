@@ -41,9 +41,9 @@ npm install
 bin/lane-desk --window
 ```
 
-Click the menu bar title for the popover. Right-click it for "Open as Window". In a window, `⌘N` opens a new window and `⌘T` a new tab.
+Click the menu bar title for the popover. Right-click it for "Open as Window". In a window, `⌘N` opens a new window and `⌘T` a new tab. On a full menu bar the title can sit behind the notch; `npx lane-desk --window` opens the window anyway.
 
-Want to look before you connect anything? `LANE_DESK_DEMO=1 npx lane-desk --window` opens the window with made-up accounts.
+Want to look before you connect anything? `LANE_DESK_DEMO=1 npx lane-desk --window` opens the window with made-up accounts, next to a Lane Desk that is already running. Without Tally, Lane Desk opens on a page that links to Tally and gives this command; if Tally is there but fails, the page shows the command it ran and the error.
 
 ## Starting sessions
 

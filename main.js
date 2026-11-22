@@ -3,7 +3,7 @@
 
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, screen, shell, dialog, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, screen, shell, dialog, Notification, clipboard } = require('electron');
 const model = require('./lib/model');
 const sources = require('./lib/sources');
 const i18n = require('./lib/i18n');
@@ -39,7 +39,7 @@ async function refresh() {
   if (inflight) return inflight;
   inflight = (async () => {
     const now = Date.now();
-    const status = demo ? demo.status(now) : await sources.readStatus();
+    const { status, problem } = demo ? { status: demo.status(now), problem: null } : await sources.readTally();
     homes = model.claudeHomes(status, sources.norm);
     lanes = model.laneTable(status, demo ? demo.config : sources.readConfig(), sources.norm);
     let sessions = [];
@@ -58,6 +58,7 @@ async function refresh() {
     view = model.buildView({
       resets,
       status,
+      problem,
       lanes,
       sessions,
       norm: sources.norm,
@@ -242,6 +243,11 @@ function registerIpc() {
     newTab();
     return true;
   });
+  // Only the demo command from the first-run screen; the renderer cannot put other text on the clipboard.
+  handle('desk:copy-demo', async () => {
+    clipboard.writeText(model.DEMO_COMMAND);
+    return { ok: true, message: t('setup.copied') };
+  });
   handle('desk:new-session', async (id) => {
     const acc = findAccount(String(id));
     const lane = acc && acc.home ? lanes[acc.home] : null;
@@ -362,6 +368,10 @@ function pickLanguage() {
   i18n.setLang(env === 'en' || env === 'ko' ? env : i18n.pick(sys));
 }
 
+// The first-run screen suggests the demo while the real Lane Desk is running. The demo keeps its own data folder
+// and skips the one-instance lock, so it opens next to the real one instead of handing off to it.
+if (demo) app.setPath('userData', path.join(app.getPath('userData'), 'demo'));
+
 if (process.env.LANE_DESK_CAPTURE) {
   app.whenReady().then(() => {
     pickLanguage();
@@ -369,7 +379,7 @@ if (process.env.LANE_DESK_CAPTURE) {
     registerIpc();
     capture(process.env.LANE_DESK_CAPTURE);
   });
-} else if (!app.requestSingleInstanceLock()) {
+} else if (!demo && !app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', () => showWindow());

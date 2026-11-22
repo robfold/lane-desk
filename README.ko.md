@@ -43,7 +43,7 @@ bin/lane-desk --window
 
 메뉴바 글자를 누르면 팝오버가 열립니다. 오른쪽 클릭 메뉴에 「창으로 열기」가 있습니다. 창에서 `⌘N`은 새 창, `⌘T`는 새 탭입니다. 메뉴바가 꽉 차면 글자가 노치 뒤에 가려질 수 있습니다. 그때는 `npx lane-desk --window`로 창을 바로 엽니다.
 
-연결하기 전에 먼저 보고 싶다면 `LANE_DESK_DEMO=1 npx lane-desk --window`로 지어낸 계정 화면을 엽니다. 이미 떠 있는 Lane Desk 옆에 따로 열립니다. Tally가 없으면 Lane Desk는 Tally 링크와 이 명령을 담은 안내 화면으로 열립니다. Tally가 있는데 실패하면 실행한 명령과 에러를 보여 줍니다.
+연결하기 전에 먼저 보고 싶다면 `LANE_DESK_DEMO=1 npx lane-desk --window`로 지어낸 계정 화면을 엽니다. 이미 떠 있는 Lane Desk 옆에 따로 열리고, 메뉴바 글자 앞에 `Demo`가 붙습니다. Tally가 없으면 Lane Desk는 Tally 링크와 이 명령을 담은 안내 화면으로 열립니다. Tally가 있는데 실패하면 실행한 명령과 에러를 보여 줍니다.
 
 ## 세션을 여는 명령
 

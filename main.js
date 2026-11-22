@@ -69,6 +69,7 @@ async function refresh() {
       now,
       history: demo ? demo.history(now) : sources.readHistory(),
     });
+    view.tmux = demo ? true : sources.hasTmux();
     view.fetchedAt = Date.now();
     view.strings = i18n.table();
     view.lang = i18n.getLang();
@@ -343,7 +344,7 @@ function findAccountByHome(home) {
   return null;
 }
 
-/** LANE_DESK_CAPTURE=<folder>: render the popover, the window, and the sessions tab to PNG without showing them, then quit. */
+/** LANE_DESK_CAPTURE=<folder>: render the popover, the window (980 and 560 wide), and the sessions tab to PNG without showing them, then quit. */
 async function capture(dir) {
   const fs = require('node:fs');
   fs.mkdirSync(dir, { recursive: true });
@@ -352,6 +353,7 @@ async function capture(dir) {
     { file: 'popover.png', mode: 'popover', tab: 'usage', ...POPOVER },
     { file: 'window-usage.png', mode: 'window', tab: 'usage', width: 980, height: 720 },
     { file: 'window-sessions.png', mode: 'window', tab: 'sessions', width: 980, height: 720 },
+    { file: 'window-narrow.png', mode: 'window', tab: 'usage', width: 560, height: 720 }, // the smallest window (minWidth)
   ];
   for (const s of shots) {
     const w = new BrowserWindow({ width: s.width, height: s.height, show: false, webPreferences });

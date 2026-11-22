@@ -92,6 +92,7 @@ main { flex: 1; overflow: auto; padding: 12px; }
 .verdict { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
 .verdict.ok { background: var(--ok-soft); color: var(--ok); }
 .verdict.low { background: var(--out-soft); color: var(--out); }
+.verdict.mixed { background: var(--low-soft); color: var(--low); }
 
 .ring-wrap { position: relative; width: 64px; height: 64px; flex: none; }
 .ring { width: 64px; height: 64px; transform: rotate(-90deg); }
@@ -106,20 +107,24 @@ main { flex: 1; overflow: auto; padding: 12px; }
 
 .acct {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   padding: 9px 14px;
   border-top: 1px solid var(--line);
 }
 .acct:first-child { border-top: 0; }
-.acct-list.codex .acct { grid-template-columns: minmax(0, 1.4fr) 1.2fr auto; }
+.acct-list.codex .acct { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) auto; }
+/* wide card: name and button are cells of one row, the button in the last column; narrow cards turn .acct-head into a row (below) */
+.acct-head { display: contents; gap: 10px; align-items: center; }
+.acct-id { min-width: 0; }
+.acct .go { grid-row: 1; grid-column: -2; }
 .acct.exhausted { background: var(--out-soft); }
 .acct.best { box-shadow: inset 3px 0 0 var(--accent); }
 .acct-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .acct-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; align-items: center; }
 .entry { background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 6px; margin-left: 4px; }
-.acct-tags .entry { margin-left: 0; }
+.acct-tags .entry { margin-left: 0; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; } /* full path on hover */
 .tag { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; }
 .tag.best { background: var(--accent); color: #fff; }
 .tag.live { background: var(--ok-soft); color: var(--ok); }
@@ -148,6 +153,7 @@ button.go {
 }
 button.go:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 button.go:disabled { opacity: 0.45; cursor: default; }
+button.go.quiet { background: transparent; color: var(--muted); font-weight: 500; } /* weekly limit used up: allowed, not suggested */
 button.go.working { opacity: 1; color: var(--accent); border-color: var(--accent); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { background: var(--accent-soft); } }
 
@@ -156,14 +162,14 @@ button.go.working { opacity: 1; color: var(--accent); border-color: var(--accent
 /* narrow cards (popover, small window): name and button on one row, bars on the next */
 .card { container-type: inline-size; }
 @container (max-width: 600px) {
-  .acct-list.claude .acct { grid-template-columns: 1fr 1fr; }
-  .acct-list.claude .acct .acct-id { grid-column: 1; }
-  .acct-list.claude .acct .go { grid-row: 1; grid-column: 2; justify-self: end; }
+  .acct-list.claude .acct { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .acct-list.claude .acct-head { display: flex; grid-column: 1 / -1; }
+  .acct-list.claude .acct-id { flex: 1; }
 }
 @container (max-width: 440px) {
-  .acct-list.codex .acct { grid-template-columns: minmax(0, 1fr) auto; }
-  .acct-list.codex .acct .meter { grid-column: 1 / -1; }
-  .acct-list.codex .acct .go { grid-row: 1; grid-column: 2; }
+  .acct-list.codex .acct { grid-template-columns: minmax(0, 1fr); }
+  .acct-list.codex .acct-head { display: flex; }
+  .acct-list.codex .acct-id { flex: 1; }
 }
 
 /* sessions */

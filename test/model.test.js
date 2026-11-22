@@ -122,7 +122,31 @@ describe('building the view', () => {
   it('carries the provider total, verdict, and headline', () => {
     const v = build();
     expect(v.providers[0]).toMatchObject({ remaining: 51, sustainable: true, headline: 'near capacity' });
+    expect(v.providers[0].verdict).toMatchObject({ tone: 'ok', label: 'Fleet lasts' });
     expect(v.providers[1]).toMatchObject({ remaining: 75, sustainable: false, headline: null });
+    expect(v.providers[1].verdict).toMatchObject({ tone: 'low', label: 'Fleet runs short' });
+  });
+
+  it('says when New session is on an account whose weekly limit is used up', () => {
+    const claude = build().providers.find((p) => p.id === 'claude');
+    expect(claude.accounts.find((a) => a.id === 'c2').outNote).toBe('Weekly limit used up · resets in 12m');
+    expect(claude.accounts.find((a) => a.id === 'c1').outNote).toBeNull();
+    const passed = { ...status, accounts: [{ ...status.accounts[1], weeklyResetsAt: '2026-11-20T00:00:00Z' }] };
+    expect(buildView({ status: passed, now: NOW }).providers[0].accounts[0].outNote).toBe('Weekly limit used up');
+  });
+
+  it('leaves out a provider with no accounts, on the card list and in the menu bar', () => {
+    const codexOnly = { ...status, accounts: status.accounts.filter((a) => a.provider === 'codex') };
+    const v = buildView({ status: codexOnly, now: NOW });
+    expect(v.providers.map((p) => p.id)).toEqual(['codex']);
+    expect(trayTitle(v)).toBe('X75');
+  });
+
+  it('shows the no-accounts screen when Tally has no Claude or Codex account', () => {
+    const v = buildView({ status: { accounts: [status.accounts[5]] }, now: NOW });
+    expect(v.setup).toMatchObject({ kind: 'noAccounts', demoCommand: 'LANE_DESK_DEMO=1 npx lane-desk --window' });
+    expect(v.error).toBe('No Claude or Codex accounts in Tally');
+    expect(trayTitle(v)).toBe('C? X?');
   });
 
   it('sorts sessions by last update and adds the tmux session name and a short path', () => {
@@ -133,6 +157,25 @@ describe('building the view', () => {
 
   it('shortens both totals into the menu bar title', () => {
     expect(trayTitle(build())).toBe('C51 X75');
+  });
+});
+
+describe('the card verdict', () => {
+  const { verdictOf } = model;
+  const before = { runout: { state: 'before' } };
+  const safe = { runout: { state: 'safe' } };
+
+  it('says the verdict is for all accounts and counts the ones that run out', () => {
+    expect(verdictOf(true, [safe, safe])).toMatchObject({ tone: 'ok', label: 'Fleet lasts' });
+    expect(verdictOf(true, [before, safe])).toMatchObject({ tone: 'mixed', label: 'Fleet lasts · 1 account runs out' });
+    expect(verdictOf(true, [before, before, { runout: null }])).toMatchObject({ label: 'Fleet lasts · 2 accounts run out' });
+    expect(verdictOf(false, [before])).toMatchObject({ tone: 'low', label: 'Fleet runs short · 1 account runs out' });
+    expect(verdictOf(null, [before])).toBeNull();
+  });
+
+  it('reads in Korean', () => {
+    i18n.setLang('ko');
+    expect(verdictOf(true, [before, before]).label).toBe('전체로는 버팀 · 2개 계정 바닥 예상');
   });
 });
 

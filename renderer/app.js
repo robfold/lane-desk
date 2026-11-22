@@ -103,45 +103,59 @@ function laneTitle(a) {
   return a.lane === a.provider ? `${a.provider} · ${a.laneHome || ''}` : `${a.lane} · ${a.laneHome || ''}`;
 }
 
-function accountRow(a, provider) {
+/** New session: off without a command or without tmux; quieter (still allowed) when the weekly limit is used up. */
+function newSessionButton(a) {
   const key = `new:${a.id}`;
   const working = busy.has(key);
+  const noTmux = view.tmux === false;
+  let title = T('ui.newSession.title', { lane: laneText(a) });
+  if (!a.lane) title = T('ui.noLane.title');
+  else if (noTmux) title = T('ui.needTmux');
+  else if (a.outNote) title = a.outNote;
+  return h(
+    'button',
+    {
+      class: `go${a.outNote ? ' quiet' : ''}${working ? ' working' : ''}`,
+      disabled: !a.lane || noTmux || working,
+      title,
+      onclick: () => act(key, () => desk.newSession(a.id)),
+    },
+    working ? T('ui.opening') : T('ui.newSession'),
+  );
+}
+
+function accountRow(a, provider) {
   return h(
     'div',
     { class: `acct${a.exhausted ? ' exhausted' : ''}${a.best ? ' best' : ''}${a.runout && a.runout.state === 'before' ? ' runout' : ''}` },
+    // Name, tags, and the button stay together: one grid row in a wide card, their own row above the bars in a narrow one.
     h(
       'div',
-      { class: 'acct-id' },
-      h('div', { class: 'acct-label', title: a.label }, a.label),
+      { class: 'acct-head' },
       h(
         'div',
-        { class: 'acct-tags' },
-        a.lane ? h('code', { class: 'entry', title: laneTitle(a) }, laneText(a)) : h('span', { class: 'muted' }, T('ui.noLane')),
-        a.best ? h('span', { class: 'tag best' }, T('ui.best')) : null,
-        a.live ? h('span', { class: 'tag live', title: T('ui.live') }, `● ${a.live}`) : null,
-        a.stale || a.failed ? h('span', { class: 'tag warn' }, a.failed ? T('ui.failed') : T('ui.stale')) : null,
-        a.limitReset && a.limitReset.label ? h('span', { class: `tag reset ${a.limitReset.state}`, title: a.limitReset.title }, a.limitReset.label) : null,
-        a.runout && a.runout.label ? h('span', { class: `tag runout ${a.runout.state}`, title: a.runout.title }, a.runout.label) : null,
+        { class: 'acct-id' },
+        h('div', { class: 'acct-label', title: a.label }, a.label),
+        h(
+          'div',
+          { class: 'acct-tags' },
+          a.lane ? h('code', { class: 'entry', title: laneTitle(a) }, laneText(a)) : h('span', { class: 'muted' }, T('ui.noLane')),
+          a.best ? h('span', { class: 'tag best' }, T('ui.best')) : null,
+          a.live ? h('span', { class: 'tag live', title: T('ui.live') }, `● ${a.live}`) : null,
+          a.stale || a.failed ? h('span', { class: 'tag warn' }, a.failed ? T('ui.failed') : T('ui.stale')) : null,
+          a.limitReset && a.limitReset.label ? h('span', { class: `tag reset ${a.limitReset.state}`, title: a.limitReset.title }, a.limitReset.label) : null,
+          a.runout && a.runout.label ? h('span', { class: `tag runout ${a.runout.state}`, title: a.runout.title }, a.runout.label) : null,
+        ),
       ),
+      newSessionButton(a),
     ),
     provider.id === 'claude' ? meter(a.model ? a.model.name : 'Model', a.model) : null,
     meter(T('ui.weekly'), a.weekly),
-    h(
-      'button',
-      {
-        class: `go${working ? ' working' : ''}`,
-        disabled: !a.lane || working,
-        title: a.lane ? T('ui.newSession.title', { lane: laneText(a) }) : T('ui.noLane.title'),
-        onclick: () => act(key, () => desk.newSession(a.id)),
-      },
-      working ? T('ui.opening') : T('ui.newSession'),
-    ),
   );
 }
 
 function providerCard(p) {
-  const verdict =
-    p.sustainable === null ? null : h('span', { class: `verdict ${p.sustainable ? 'ok' : 'low'}` }, p.sustainable ? T('ui.sustainable') : T('ui.short'));
+  const verdict = p.verdict ? h('span', { class: `verdict ${p.verdict.tone}`, title: p.verdict.title }, p.verdict.label) : null;
   return h(
     'section',
     { class: `card ${p.id}` },
@@ -223,8 +237,17 @@ function sessionsTab() {
   );
 }
 
-/** First run: Tally is missing (what it is, where to get it, the demo) or it ran and failed (what went wrong). */
+/** First run: Tally is missing (what it is, where to get it, the demo), has no accounts, or ran and failed (what went wrong). */
 function setupScreen(s) {
+  const demo = () => [
+    h('p', { class: 'muted small' }, T('setup.missing.demo')),
+    h(
+      'div',
+      { class: 'cmd copy' },
+      h('code', {}, s.demoCommand),
+      h('button', { class: 'go', onclick: () => act('copy', () => desk.copyDemo()) }, T('setup.copy')),
+    ),
+  ];
   if (s.kind === 'missing') {
     return h(
       'section',
@@ -234,14 +257,11 @@ function setupScreen(s) {
       // target=_blank goes to the window-open handler in main.js, which opens https links in the default browser.
       h('a', { class: 'link', href: s.tallyUrl, target: '_blank', rel: 'noopener', title: s.tallyUrl }, `${T('setup.missing.get')} ↗`),
       h('p', { class: 'muted' }, T('setup.missing.after')),
-      h('p', { class: 'muted small' }, T('setup.missing.demo')),
-      h(
-        'div',
-        { class: 'cmd copy' },
-        h('code', {}, s.demoCommand),
-        h('button', { class: 'go', onclick: () => act('copy', () => desk.copyDemo()) }, T('setup.copy')),
-      ),
+      demo(),
     );
+  }
+  if (s.kind === 'noAccounts') {
+    return h('section', { class: 'setup' }, h('h2', {}, T('setup.noAccounts.title')), h('p', {}, T('setup.noAccounts.after')), demo());
   }
   return h(
     'section',

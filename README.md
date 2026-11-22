@@ -4,7 +4,7 @@ English · [한국어](README.ko.md)
 
 A macOS menu bar app for people who use Claude Code or Codex on more than one account. It reads what [Tally](https://github.com/jettoai/tally) already tracks and shows, per account, how much is left and when it runs out at your current pace. From the same window you start a session on any account, or jump back into one that is running.
 
-![The Usage tab: Claude and Codex cards with one row per account. The personal Claude account has 9% weekly left and a red "Runs out Sun 03:25" tag; the others say "Lasts until reset".](assets/usage.png)
+![The Usage tab: Claude and Codex cards with one row per account. The personal Claude account has 9% weekly left and a red "Runs out" tag with a day and time; the others say "Lasts until reset".](assets/usage.png)
 
 <sub>Screenshots use made-up accounts (`LANE_DESK_DEMO=1`).</sub>
 

@@ -66,8 +66,12 @@ code { font: 12px ui-monospace, 'SF Mono', Menlo, monospace; }
 .tabs { display: flex; background: var(--line); padding: 3px; border-radius: 10px; gap: 2px; }
 .tabs button {
   border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600;
-  padding: 5px 14px; border-radius: 8px; cursor: pointer;
+  padding: 5px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap;
 }
+/* the 420 px popover keeps brand, tabs, badge, time, and buttons on one line */
+.mode-popover .bar { gap: 8px; }
+.mode-popover .tabs button { padding: 5px 10px; }
+#updated { white-space: nowrap; }
 .tabs button[aria-selected='true'] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
 .count:not(:empty) { background: var(--accent); color: #fff; border-radius: 9px; padding: 0 6px; font-size: 11px; margin-left: 2px; }
 .tools { margin-left: auto; display: flex; align-items: center; gap: 6px; }
@@ -80,6 +84,8 @@ button.icon {
 main { flex: 1; overflow: auto; padding: 12px; }
 .empty-state { text-align: center; color: var(--muted); padding: 48px 12px; }
 .empty-state.error { color: var(--out); }
+.notice { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; background: var(--low-soft); color: var(--low); font-size: 12.5px; }
+.notice code { white-space: nowrap; -webkit-user-select: all; user-select: all; }
 
 /* usage */
 .providers { display: grid; gap: 12px; }
@@ -153,7 +159,9 @@ button.go {
 }
 button.go:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 button.go:disabled { opacity: 0.45; cursor: default; }
-button.go.quiet { background: transparent; color: var(--muted); font-weight: 500; } /* weekly limit used up: allowed, not suggested */
+/* weekly limit used up: allowed, not suggested. The text stays sharp; only the border and fill fade.
+   A button that is off (:disabled) fades as a whole, so the two read differently. */
+button.go.quiet { background: transparent; border-style: dashed; border-color: color-mix(in srgb, var(--muted) 55%, transparent); }
 button.go.working { opacity: 1; color: var(--accent); border-color: var(--accent); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { background: var(--accent-soft); } }
 

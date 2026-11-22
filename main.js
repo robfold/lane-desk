@@ -212,6 +212,9 @@ function buildAppMenu() {
 
 function trayMenu() {
   return Menu.buildFromTemplate([
+    // Which copy is running, so an upgrade can be checked from the menu bar.
+    { label: model.appLabel(app.getVersion(), Boolean(demo)), enabled: false },
+    { type: 'separator' },
     { label: t('menu.openWindow'), click: () => showWindow() },
     { label: t('menu.refresh'), click: () => refresh() },
     { type: 'separator' },
@@ -365,6 +368,32 @@ async function capture(dir) {
   app.quit();
 }
 
+/**
+ * An upgrade often starts the new copy while the old one is still quitting. When the old copy does not answer the
+ * one-instance handshake, requestSingleInstanceLock waits for it and then returns true, but this process never gets
+ * 'ready' (reproduced on Electron 45.4.1 with an owner that stopped answering for 0.2 s to 20 s). It would stay up
+ * holding the lock, with no menu bar item, and every later launch would hand off to it. So: not ready 8 s after the
+ * lock, start over once (by then the old copy is gone); a copy that was started over and is still not ready after
+ * 30 s exits rather than hold the lock.
+ */
+const RELAUNCHED = '--lane-desk-relaunched';
+function watchReady() {
+  const again = process.argv.includes(RELAUNCHED);
+  const timer = setTimeout(
+    () => {
+      if (app.isReady()) return;
+      if (again) {
+        app.exit(1);
+        return;
+      }
+      app.relaunch({ args: [...process.argv.slice(1), RELAUNCHED] });
+      app.exit(0);
+    },
+    again ? 30_000 : 8_000,
+  );
+  app.whenReady().then(() => clearTimeout(timer));
+}
+
 // Stay in the menu bar when every window is closed. Without this, Electron quits with the last window.
 app.on('window-all-closed', () => {});
 
@@ -388,6 +417,7 @@ if (process.env.LANE_DESK_CAPTURE) {
 } else if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
+  watchReady();
   app.on('second-instance', () => showWindow());
   app.whenReady().then(() => {
     pickLanguage();

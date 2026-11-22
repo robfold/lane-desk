@@ -179,6 +179,46 @@ describe('the card verdict', () => {
   });
 });
 
+describe('Codex banked resets from Tally', () => {
+  const codex = (over) => ({ id: 'x9', provider: 'codex', label: 'dev', launchHome: '/home/me/.codex', weeklyRemaining: 50, ...over });
+  const tag = (over) => buildView({ status: { accounts: [codex(over)] }, now: NOW, timeZone: 'UTC' }).providers[0].accounts[0].codexResets;
+
+  it('counts the resets left and gives the soonest expiry, from Tally', () => {
+    const r = tag({ resetState: 'available', resetCreditsAvailable: 2, resetCreditsNextExpiry: '2026-12-12T22:41:46Z', resetCreditsExpiryUnknown: false });
+    expect(r.label).toBe('2 resets left');
+    expect(r.title).toBe(
+      'This Codex account can still redeem 2 banked resets. A reset refills the weekly limit. The soonest expires Dec 12, 22:41 (in 21d 22h). Source: Tally. Lane Desk does not redeem them.',
+    );
+  });
+
+  it('says when an expiry is not reported, and never reads no date as no expiry', () => {
+    const r = tag({ resetCreditsAvailable: 1, resetCreditsExpiryUnknown: true });
+    expect(r.label).toBe('1 reset left');
+    expect(r.title).toContain('At least one has no reported expiry.');
+    expect(r.title).not.toContain('soonest');
+  });
+
+  it('draws nothing for zero, a missing count, or a Claude account', () => {
+    expect(tag({ resetState: 'used', resetCreditsAvailable: 0 })).toBeNull();
+    expect(tag({ resetState: 'notSupported' })).toBeNull();
+    expect(buildView({ status, now: NOW }).providers[0].accounts[0].codexResets).toBeNull();
+  });
+
+  it('reads in Korean', () => {
+    i18n.setLang('ko');
+    const r = tag({ resetCreditsAvailable: 3, resetCreditsNextExpiry: '2026-11-30T19:55:07Z' });
+    expect(r.label).toBe('리셋 3회 남음');
+    expect(r.title).toContain('가장 빠른 만료는 11월 30일 19:55(9d 19h 뒤)입니다.');
+  });
+});
+
+describe('the version line in the menu bar menu', () => {
+  it('names the running version, and the demo', () => {
+    expect(model.appLabel('0.2.1')).toBe('Lane Desk 0.2.1');
+    expect(model.appLabel('0.2.1', true)).toBe('Lane Desk 0.2.1 (demo)');
+  });
+});
+
 describe('short paths', () => {
   it('shortens only paths inside the home folder', () => {
     expect(model.shortPath('/home/me/code', '/home/me')).toBe('~/code');

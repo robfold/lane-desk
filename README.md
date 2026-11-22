@@ -4,14 +4,14 @@ English · [한국어](README.ko.md)
 
 A macOS menu bar app for people who use Claude Code or Codex on more than one account. It reads what [Tally](https://github.com/jettoai/tally) already tracks and shows, per account, how much is left and when it runs out at your current pace. From the same window you start a session on any account, or jump back into one that is running.
 
-![The Usage tab: Claude and Codex cards with one row per account. The Claude card says "Fleet lasts · 1 account runs out": the personal account has 9% weekly left and a red "Runs out" tag with a day and time. The account with no weekly left has a dimmed New session button.](assets/usage.png)
+![The Usage tab: Claude and Codex cards with one row per account. The Claude card says "Fleet lasts · 1 account runs out": the personal account has 9% weekly left and a red "Runs out" tag with a day and time. The account with no weekly left has a dashed New session button, and a Codex account shows "2 resets left".](assets/usage.png)
 
 <sub>Screenshots use made-up accounts (`LANE_DESK_DEMO=1`).</sub>
 
 - **The menu bar shows `C31 X71`**: Claude and Codex, percent left across all your accounts, as Tally weighs them. A provider with no accounts in Tally is left out (`X71`), on the menu bar and as a card.
 - **Each card's verdict is Tally's, for all its accounts together** ("Fleet lasts" or "Fleet runs short"), with the number of accounts that run out before their reset next to it ("Fleet lasts · 1 account runs out").
 - **Run-out forecast per account.** It measures how fast each account spent its weekly limit over the last 72 hours. If the account will run out before its weekly reset, it gets a red tag with the time ("Runs out Sun 03:25"). Otherwise the tag says "Lasts until reset". It only tells you. It sends no notification and never switches accounts for you.
-- **New session** opens a tmux session on that account and attaches to it in a new iTerm tab. On an account whose weekly limit is used up, the button is dimmed but still works (the limit may reset soon); hover it for when. Without tmux the button is off and says what to install.
+- **New session** opens a tmux session on that account and attaches to it in a new iTerm tab. On an account whose weekly limit is used up, the button is dimmed but still works (the limit may reset soon); hover it for when. Without tmux the buttons are off and a line above the cards says what to install.
 - **Sessions tab** lists the Claude Code sessions running now, newest first. **Attach** opens the session's tmux session in iTerm, or brings iTerm forward if a window is already attached.
 - **Reset** appears on a session stuck at its 5-hour limit. It types `/limit-reset` into that session after you confirm, then reads Claude Code's answer from the transcript.
 
@@ -31,7 +31,9 @@ npx lane-desk            # menu bar only
 npx lane-desk --window   # also open a window
 ```
 
-Or install it once with `npm i -g lane-desk` and run `lane-desk`. The first run downloads Electron (about 110 MB). Installed from npm, it runs without the "unidentified developer" prompt that an unsigned `.app` download gets.
+Or install it once with `npm i -g lane-desk` and run `lane-desk`. `npm i -g` does not fetch Electron; the first run does (about 120 MB, 260 MB unpacked), unless a copy is already in `~/Library/Caches/electron`. Installed from npm, it runs without the "unidentified developer" prompt that an unsigned `.app` download gets.
+
+To upgrade a global install: right-click the menu bar title → Quit, then `npm i -g lane-desk@latest`, then `lane-desk`. The top line of that right-click menu shows the version that is running.
 
 From a clone:
 
@@ -92,6 +94,8 @@ Claude Code can lift a session's 5-hour limit once a week with `/limit-reset`. T
 - The button works only when the session is idle, this week's reset is not known to be used (an account with no tag counts), and the account has at least 20% weekly left (Tally's rule: below that, the weekly wall comes soon anyway).
 - It does not type into a tmux pane in scroll mode, and it checks the session again right before typing.
 - Not seen yet: the success sentence. The only real answer observed so far is "A 5-hour limit reset isn't available right now." from a session that was not at its limit.
+
+**Codex** accounts can bank resets that refill the weekly limit. When Tally reports some (`resetCreditsAvailable` above 0), the account gets a tag such as `2 resets left`; hover it for the soonest expiry, or a note that an expiry was not reported. Lane Desk only shows them; it does not redeem them.
 
 ## What it reads
 

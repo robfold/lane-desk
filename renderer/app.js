@@ -144,6 +144,7 @@ function accountRow(a, provider) {
           a.live ? h('span', { class: 'tag live', title: T('ui.live') }, `● ${a.live}`) : null,
           a.stale || a.failed ? h('span', { class: 'tag warn' }, a.failed ? T('ui.failed') : T('ui.stale')) : null,
           a.limitReset && a.limitReset.label ? h('span', { class: `tag reset ${a.limitReset.state}`, title: a.limitReset.title }, a.limitReset.label) : null,
+          a.codexResets ? h('span', { class: 'tag reset available', title: a.codexResets.title }, a.codexResets.label) : null,
           a.runout && a.runout.label ? h('span', { class: `tag runout ${a.runout.state}`, title: a.runout.title }, a.runout.label) : null,
         ),
       ),
@@ -170,7 +171,9 @@ function providerCard(p) {
 }
 
 function usageTab() {
-  return h('div', { class: 'providers' }, view.providers.map(providerCard));
+  // Without tmux every New session button is off; say why where it can be seen, not only on hover.
+  const noTmux = view.tmux === false ? h('p', { class: 'notice' }, T('ui.needTmux.notice'), ' ', h('code', {}, 'brew install tmux')) : null;
+  return h('div', {}, noTmux, h('div', { class: 'providers' }, view.providers.map(providerCard)));
 }
 
 // The status values in Claude session files. "shell" looks like a shell command is running (observed, not documented).
@@ -300,7 +303,9 @@ function updatedLabel() {
   const el = document.getElementById('updated');
   if (!view || !view.fetchedAt) return;
   const s = Math.round((Date.now() - view.fetchedAt) / 1000);
-  el.textContent = s < 5 ? T('ui.justUpdated') : s < 60 ? T('ui.secAgo', { n: s }) : T('ui.minAgo', { n: Math.floor(s / 60) });
+  // The popover's top bar has room for a short word only ("Just now", not "Updated just now").
+  const now = mode === 'popover' ? T('ui.justUpdated.short') : T('ui.justUpdated');
+  el.textContent = s < 5 ? now : s < 60 ? T('ui.secAgo', { n: s }) : T('ui.minAgo', { n: Math.floor(s / 60) });
   el.classList.toggle('warn', Boolean(view.stale));
   el.title = view.stale ? T('ui.staleTitle') : '';
 }

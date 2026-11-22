@@ -223,6 +223,36 @@ function sessionsTab() {
   );
 }
 
+/** First run: Tally is missing (what it is, where to get it, the demo) or it ran and failed (what went wrong). */
+function setupScreen(s) {
+  if (s.kind === 'missing') {
+    return h(
+      'section',
+      { class: 'setup' },
+      h('h2', {}, T('setup.missing.title')),
+      h('p', {}, T('setup.missing.what')),
+      // target=_blank goes to the window-open handler in main.js, which opens https links in the default browser.
+      h('a', { class: 'link', href: s.tallyUrl, target: '_blank', rel: 'noopener', title: s.tallyUrl }, `${T('setup.missing.get')} ↗`),
+      h('p', { class: 'muted' }, T('setup.missing.after')),
+      h('p', { class: 'muted small' }, T('setup.missing.demo')),
+      h(
+        'div',
+        { class: 'cmd copy' },
+        h('code', {}, s.demoCommand),
+        h('button', { class: 'go', onclick: () => act('copy', () => desk.copyDemo()) }, T('setup.copy')),
+      ),
+    );
+  }
+  return h(
+    'section',
+    { class: 'setup failed' },
+    h('h2', {}, T('setup.failed.title')),
+    s.command ? h('div', { class: 'cmd' }, h('code', {}, s.command)) : null,
+    h('p', { class: 'detail' }, s.detail),
+    h('p', { class: 'muted' }, T('setup.failed.after')),
+  );
+}
+
 function render() {
   for (const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
   const content = document.getElementById('content');
@@ -233,6 +263,11 @@ function render() {
     return;
   }
   count.textContent = view.sessions && view.sessions.length ? String(view.sessions.length) : '';
+  if (view.setup) {
+    content.replaceChildren(setupScreen(view.setup));
+    updatedLabel();
+    return;
+  }
   if (view.error) {
     content.replaceChildren(h('p', { class: 'empty-state error' }, view.error));
     return;

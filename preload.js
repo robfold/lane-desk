@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('desk', {
   refresh: () => ipcRenderer.invoke('desk:refresh'),
   openWindow: () => ipcRenderer.invoke('desk:open-window'),
   newTab: () => ipcRenderer.invoke('desk:new-tab'),
+  copyDemo: () => ipcRenderer.invoke('desk:copy-demo'),
   newSession: (accountId) => ipcRenderer.invoke('desk:new-session', String(accountId)),
   attach: (pid) => ipcRenderer.invoke('desk:attach', Number(pid)),
   limitReset: (pid) => ipcRenderer.invoke('desk:limit-reset', Number(pid)),

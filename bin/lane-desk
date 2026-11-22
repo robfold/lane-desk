@@ -24,4 +24,11 @@ const child = spawn(electron, [root, ...process.argv.slice(2)], {
   stdio: 'ignore',
 });
 if (capture) child.on('exit', (code) => process.exit(code ?? 0));
-else child.unref();
+else {
+  child.unref();
+  // The app prints nothing itself, and its menu bar item can sit behind the notch. Say where it went.
+  const i18n = require('../lib/i18n');
+  i18n.setLang(i18n.langFromEnv(process.env));
+  console.log(i18n.t('cli.running'));
+  if (!process.argv.includes('--window')) console.log(i18n.t('cli.hidden'));
+}

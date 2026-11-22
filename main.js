@@ -3,13 +3,16 @@
 
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, screen, shell, dialog, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, screen, shell, dialog, Notification, clipboard } = require('electron');
 const model = require('./lib/model');
 const sources = require('./lib/sources');
 const i18n = require('./lib/i18n');
 const { t } = i18n;
 // LANE_DESK_DEMO=1 draws made-up accounts instead of reading Tally (for screenshots).
 const demo = process.env.LANE_DESK_DEMO === '1' ? require('./lib/demo') : null;
+// The demo can run next to the real app, so its menu bar item, tooltip, and window title say so.
+const APP_TITLE = demo ? 'Lane Desk (demo)' : 'Lane Desk';
+const trayText = (text) => (demo ? `Demo ${text}` : text);
 
 const RENDERER = path.join(__dirname, 'renderer', 'index.html');
 const RENDERER_URL = pathToFileURL(RENDERER).href;
@@ -39,7 +42,7 @@ async function refresh() {
   if (inflight) return inflight;
   inflight = (async () => {
     const now = Date.now();
-    const status = demo ? demo.status(now) : await sources.readStatus();
+    const { status, problem } = demo ? { status: demo.status(now), problem: null } : await sources.readTally();
     homes = model.claudeHomes(status, sources.norm);
     lanes = model.laneTable(status, demo ? demo.config : sources.readConfig(), sources.norm);
     let sessions = [];
@@ -58,6 +61,7 @@ async function refresh() {
     view = model.buildView({
       resets,
       status,
+      problem,
       lanes,
       sessions,
       norm: sources.norm,
@@ -69,7 +73,7 @@ async function refresh() {
     view.strings = i18n.table();
     view.lang = i18n.getLang();
     lastFetch = Date.now();
-    if (tray) tray.setTitle(model.trayTitle(view), { fontType: 'monospacedDigit' });
+    if (tray) tray.setTitle(trayText(model.trayTitle(view)), { fontType: 'monospacedDigit' });
     for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('desk:view', view);
     return view;
   })().finally(() => {
@@ -142,13 +146,14 @@ function createWindow({ tabOf = null, tab = 'usage' } = {}) {
     height: 720,
     minWidth: 560,
     minHeight: 420,
-    title: 'Lane Desk',
+    title: APP_TITLE,
     titleBarStyle: 'hiddenInset',
     tabbingIdentifier: 'lane-desk',
     show: false,
     webPreferences,
   });
   lockDown(win);
+  if (demo) win.on('page-title-updated', (e) => e.preventDefault()); // keep "(demo)" over the page's <title>
   win.loadFile(RENDERER, { query: { mode: 'window', tab } });
   win.once('ready-to-show', () => win.show());
   windows.add(win);
@@ -241,6 +246,11 @@ function registerIpc() {
   handle('desk:new-tab', async () => {
     newTab();
     return true;
+  });
+  // Only the demo command from the first-run screen; the renderer cannot put other text on the clipboard.
+  handle('desk:copy-demo', async () => {
+    clipboard.writeText(model.DEMO_COMMAND);
+    return { ok: true, message: t('setup.copied') };
   });
   handle('desk:new-session', async (id) => {
     const acc = findAccount(String(id));
@@ -362,6 +372,10 @@ function pickLanguage() {
   i18n.setLang(env === 'en' || env === 'ko' ? env : i18n.pick(sys));
 }
 
+// The first-run screen suggests the demo while the real Lane Desk is running. The one-instance lock is scoped to the
+// userData folder, so with its own folder the demo opens next to the real app, and a second demo run brings the first forward.
+if (demo) app.setPath('userData', path.join(app.getPath('userData'), 'demo'));
+
 if (process.env.LANE_DESK_CAPTURE) {
   app.whenReady().then(() => {
     pickLanguage();
@@ -379,8 +393,8 @@ if (process.env.LANE_DESK_CAPTURE) {
     buildAppMenu();
     registerIpc();
     tray = new Tray(nativeImage.createEmpty());
-    tray.setTitle('C… X…', { fontType: 'monospacedDigit' });
-    tray.setToolTip('Lane Desk');
+    tray.setTitle(trayText('C… X…'), { fontType: 'monospacedDigit' });
+    tray.setToolTip(APP_TITLE);
     tray.on('click', togglePopover);
     tray.on('right-click', () => tray.popUpContextMenu(trayMenu()));
     createPopover();

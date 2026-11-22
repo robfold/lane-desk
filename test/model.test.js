@@ -150,6 +150,31 @@ describe('when Tally cannot be read', () => {
     expect(v.error).toMatch(/Tally/);
     expect(trayTitle(v)).toBe('C? X?');
   });
+
+  it('shows where to get Tally and the demo command when Tally is missing', () => {
+    const v = buildView({ status: null, problem: { kind: 'missing' }, now: NOW });
+    expect(v.setup).toEqual({
+      kind: 'missing',
+      tallyUrl: 'https://github.com/jettoai/tally',
+      demoCommand: 'LANE_DESK_DEMO=1 npx lane-desk --window',
+    });
+    expect(v.error).toBe('Tally not found');
+    expect(trayTitle(v)).toBe('C? X?');
+  });
+
+  it('shows the command and what went wrong when Tally ran and failed', () => {
+    const problem = { kind: 'failed', command: '/usr/bin/false status --json', detail: 'exited with code 1' };
+    const v = buildView({ status: null, problem, now: NOW });
+    expect(v.setup).toEqual(problem);
+    expect(v.providers).toEqual([]);
+  });
+
+  it('treats a status without accounts as a failure, in Korean too', () => {
+    i18n.setLang('ko');
+    const v = buildView({ status: { version: 1 }, now: NOW });
+    expect(v.setup).toEqual({ kind: 'failed', command: null, detail: 'JSON에 accounts 목록이 없음' });
+    expect(v.error).toBe('Tally를 실행했지만 상태를 읽지 못했습니다');
+  });
 });
 
 describe('strings', () => {
@@ -161,6 +186,15 @@ describe('strings', () => {
     expect(i18n.pick('ko-KR')).toBe('ko');
     expect(i18n.pick('en-US')).toBe('en');
     expect(i18n.pick(undefined)).toBe('en');
+  });
+
+  it('picks the terminal language from LANE_DESK_LANG, then the shell locale', () => {
+    expect(i18n.langFromEnv({ LANE_DESK_LANG: 'ko', LANG: 'en_US.UTF-8' })).toBe('ko');
+    expect(i18n.langFromEnv({ LANE_DESK_LANG: 'en', LC_ALL: 'ko_KR.UTF-8' })).toBe('en');
+    expect(i18n.langFromEnv({ LC_ALL: 'ko_KR.UTF-8', LANG: 'en_US.UTF-8' })).toBe('ko');
+    expect(i18n.langFromEnv({ LANG: 'ko_KR.UTF-8' })).toBe('ko');
+    expect(i18n.langFromEnv({ LANE_DESK_LANG: 'fr', LANG: 'C' })).toBe('en');
+    expect(i18n.langFromEnv({})).toBe('en');
   });
 
   it('fills slots and leaves unknown slots alone', () => {
